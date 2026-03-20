@@ -5,6 +5,7 @@ import { ArrowLeft, ArrowUpRight, BarChart3 } from "lucide-react";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getQrAnalytics } from "@/lib/analytics/get-qr-analytics";
+import { generateQrDataUrl } from "@/lib/qr/generate";
 
 export const dynamic = "force-dynamic";
 
@@ -13,9 +14,10 @@ const qrIdSchema = z.string().min(4).max(64);
 export default async function QrCodeAnalyticsPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
-  const parsedId = qrIdSchema.safeParse(params.id);
+  const { id } = await params;
+  const parsedId = qrIdSchema.safeParse(id);
   if (!parsedId.success) notFound();
 
   const supabase = createSupabaseServerClient();
@@ -46,6 +48,10 @@ export default async function QrCodeAnalyticsPage({
     maxEvents: 5000,
   });
 
+  const appUrl = process.env.APP_URL?.replace(/\/$/, "");
+  const shortUrl = appUrl ? `${appUrl}/q/${qr.id}` : `/q/${qr.id}`;
+  const qrImageUrl = await generateQrDataUrl(shortUrl, 220);
+
   return (
     <div className="mx-auto w-full max-w-4xl">
       <div className="flex flex-col gap-6">
@@ -73,6 +79,14 @@ export default async function QrCodeAnalyticsPage({
         </div>
 
         <section className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4 shadow-sm">
+          <div className="flex flex-col gap-2">
+            <p className="text-sm text-muted-foreground">QR Vorschau</p>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={qrImageUrl} alt="QR Code" className="h-44 w-44 rounded border border-border" />
+            <p className="text-xs text-muted-foreground">
+              Short URL: <span className="font-mono">{shortUrl}</span>
+            </p>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
               <p className="text-sm text-muted-foreground">

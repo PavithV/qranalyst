@@ -3,6 +3,7 @@ import { BarChart3, ChartNoAxesCombined, Link2, QrCode } from "lucide-react";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import CreateQrCodeForm from "@/components/dashboard/CreateQrCodeForm";
+import QrCodeActions from "@/components/dashboard/QrCodeActions";
 
 export const dynamic = "force-dynamic";
 
@@ -28,6 +29,7 @@ export default async function DashboardPage() {
   }
 
   const totalQrCodes = qrCodes?.length ?? 0;
+  const appUrl = process.env.APP_URL?.replace(/\/$/, "");
 
   return (
     <div className="flex flex-col gap-6">
@@ -91,27 +93,18 @@ export default async function DashboardPage() {
                     <p className="mt-1 break-words text-sm text-muted-foreground">
                       Ziel: <span className="font-mono text-xs">{qr.target_url}</span>
                     </p>
+                    <p className="mt-1 break-words text-xs text-muted-foreground">
+                      Short URL:{" "}
+                      <span className="font-mono">
+                        {appUrl ? `${appUrl}/q/${qr.id}` : `/q/${qr.id}`}
+                      </span>
+                    </p>
                     <p className="mt-1 text-xs text-muted-foreground">
                       Erstellt:{" "}
                       {qr.created_at ? new Date(qr.created_at).toLocaleString("de-DE") : "-"}
                     </p>
                   </div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Link
-                      className="inline-flex h-9 items-center rounded-md border border-border px-3 text-sm hover:bg-muted"
-                      href={`/q/${qr.id}`}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      QR testen
-                    </Link>
-                    <Link
-                      className="inline-flex h-9 items-center rounded-md bg-primary px-3 text-sm text-primary-foreground hover:opacity-90"
-                      href={`/dashboard/qrcodes/${qr.id}`}
-                    >
-                      Analytics
-                    </Link>
-                  </div>
+                  <QrCodeActions id={qr.id} />
                 </div>
               </article>
             ))}
