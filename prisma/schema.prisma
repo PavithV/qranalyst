@@ -1,0 +1,120 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum SubscriptionPlan {
+  FREE
+  STARTER
+  PRO
+}
+
+enum SubscriptionStatus {
+  active
+  canceled
+  incomplete
+  trialing
+  past_due
+}
+
+model Profile {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  createdAt DateTime @default(now()) @map("created_at")
+
+  projects       Project[]
+  qrCodes        QrCode[]
+  subscriptions  Subscription[]
+  usageLimit     UsageLimit?
+
+  @@map("profiles")
+}
+
+model Project {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  name      String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user   Profile @relation(fields: [userId], references: [id], onDelete: Cascade)
+  qrCodes QrCode[]
+
+  @@map("projects")
+}
+
+model QrCode {
+  id          String   @id
+  userId      String   @map("user_id")
+  projectId  String?  @map("project_id")
+
+  targetUrl  String   @map("target_url")
+  label       String?
+  campaign    String?
+  color       String?
+  logoUrl     String?  @map("logo_url")
+
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user Profile @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project Project? @relation(fields: [projectId], references: [id])
+  scanEvents ScanEvent[]
+
+  @@map("qr_codes")
+  @@index([userId])
+}
+
+model ScanEvent {
+  id String @id @default(uuid())
+
+  qrCodeId     String? @map("qr_code_id")
+  userAgent    String? @map("user_agent")
+  referrer     String? @map("referrer")
+  ipHash       String? @map("ip_hash")
+  countryCode  String? @map("country_code")
+  deviceType   String? @map("device_type")
+  osName       String? @map("os_name")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  qrCode QrCode? @relation(fields: [qrCodeId], references: [id])
+
+  @@map("scan_events")
+  @@index([qrCodeId, createdAt])
+  @@index([countryCode])
+  @@index([deviceType])
+}
+
+model Subscription {
+  id String @id @default(uuid())
+
+  userId                 String   @unique @map("user_id")
+  stripeCustomerId      String?  @map("stripe_customer_id")
+  stripeSubscriptionId  String?  @map("stripe_subscription_id")
+  plan                   SubscriptionPlan
+  status                 SubscriptionStatus
+  currentPeriodEnd      DateTime? @map("current_period_end")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user Profile @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("subscriptions")
+}
+
+model UsageLimit {
+  userId               String @id @map("user_id")
+  qrCodeLimit          Int    @map("qr_code_limit")
+  monthlyScanLimit    Int    @map("monthly_scan_limit")
+  analyticsRetentionDays Int @map("analytics_retention_days")
+
+  user Profile @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("usage_limits")
+}
+
