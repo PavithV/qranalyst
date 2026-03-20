@@ -1,6 +1,6 @@
 <p align="center">
   <strong>Simple QR + Analytics</strong><br/>
-  <sub>Trackbare QR-Codes · Short-URL-Redirects · Analytics · Auth · Billing</sub>
+  <sub>Trackable QR codes · Short-URL redirects · Analytics · Auth · Billing</sub>
 </p>
 
 <p align="center">
@@ -26,98 +26,98 @@
 
 ---
 
-## Überblick
+## Overview
 
-Full-Stack-MVP: Nutzer:innen erstellen QR-Codes, die über eine kurze URL (`/q/[id]`) weiterleiten. Jeder Scan wird geloggt; Analytics und Limits pro Plan sind vorgesehen.
+Full-stack MVP: users create QR codes that redirect via a short URL (`/q/[id]`). Each scan is logged; analytics and per-plan limits are supported.
 
-## Kernfunktionen
+## Core features
 
-| Bereich | Inhalt |
-|--------|--------|
-| **Auth** | Signup / Login (Supabase) |
-| **QR** | Erstellen, Liste, Detail, Bearbeiten, Löschen |
-| **API** | REST inkl. optional **API-Key** (`Bearer`) für u. a. `GET`/`POST /api/qrcodes` |
-| **Redirects** | `GET /q/[id]` → 302 + Scan-Event |
-| **Analytics** | Aggregation pro QR-Code |
-| **Billing** | Stripe Checkout + Webhook → `subscriptions` + Limits |
-| **Product Analytics** | PostHog (Client + Server wo angebunden) |
+| Area | What’s included |
+|------|-----------------|
+| **Auth** | Sign up / sign in (Supabase) |
+| **QR** | Create, list, detail, edit, delete |
+| **API** | REST, including optional **API key** (`Bearer`) for e.g. `GET`/`POST /api/qrcodes` |
+| **Redirects** | `GET /q/[id]` → 302 + scan event |
+| **Analytics** | Aggregation per QR code |
+| **Billing** | Stripe Checkout + webhook → `subscriptions` + limits |
+| **Product analytics** | PostHog (client + server where wired) |
 
-## Lokale Entwicklung
+## Local development
 
 ```bash
 npm install
-cp .env.example .env.local   # falls vorhanden; sonst Variablen manuell setzen
+cp .env.example .env.local   # if present; otherwise set variables manually
 npx prisma generate
 npm run dev
 ```
 
 App: [http://localhost:3000](http://localhost:3000)
 
-## Environment-Variablen
+## Environment variables
 
-| Variable | Woher / Zweck |
-|----------|----------------|
+| Variable | Source / purpose |
+|----------|------------------|
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase → **Project Settings → API** → Project URL |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Dasselbe → `anon` **public** key |
-| `SUPABASE_SERVICE_ROLE_KEY` | Dasselbe → `service_role` (**geheim**, nur Server) |
-| `DATABASE_URL` | Supabase → **Project Settings → Database** → Connection string (Pooler empfohlen für Serverless) |
-| `DIRECT_URL` | Optional: direkter Postgres-Port für Migrationen (siehe Prisma + Supabase-Docs) |
-| `APP_URL` | Öffentliche App-URL, z. B. `https://dein-projekt.vercel.app` (Stripe Redirects) |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Same → `anon` **public** key |
+| `SUPABASE_SERVICE_ROLE_KEY` | Same → `service_role` (**secret**, server only) |
+| `DATABASE_URL` | Supabase → **Project Settings → Database** → connection string (pooler recommended for serverless) |
+| `DIRECT_URL` | Optional: direct Postgres port for migrations (see Prisma + Supabase docs) |
+| `APP_URL` | Public app URL, e.g. `https://your-project.vercel.app` (Stripe redirects) |
 | `NEXT_PUBLIC_POSTHOG_KEY` | PostHog → Project → **Project API Key** |
-| `NEXT_PUBLIC_POSTHOG_HOST` | z. B. `https://eu.posthog.com` oder Self-Host-URL |
+| `NEXT_PUBLIC_POSTHOG_HOST` | e.g. `https://eu.posthog.com` or your self-hosted URL |
 
-### Stripe (Checkout + Webhook)
+### Stripe (Checkout + webhook)
 
-Im [Stripe Dashboard](https://dashboard.stripe.com/) (für Tests: **Testmodus** einschalten):
+In the [Stripe Dashboard](https://dashboard.stripe.com/) (for testing, enable **Test mode**):
 
-| Variable | Woher |
-|----------|--------|
+| Variable | Where to find it |
+|----------|------------------|
 | **`STRIPE_SECRET_KEY`** | **Developers → API keys** → **Secret key** (`sk_test_…` / `sk_live_…`) |
-| **`STRIPE_WEBHOOK_SECRET`** | **Developers → Webhooks** → Endpoint anlegen → **Signing secret** (`whsec_…`) |
-| **`STRIPE_PRICE_ID_STARTER`** | **Product catalog** → Produkt **Starter** → **Price** anlegen (Subscription) → Price-ID kopieren (`price_…`) |
-| **`STRIPE_PRICE_ID_PRO`** | Wie oben für **Pro** |
+| **`STRIPE_WEBHOOK_SECRET`** | **Developers → Webhooks** → create endpoint → **Signing secret** (`whsec_…`) |
+| **`STRIPE_PRICE_ID_STARTER`** | **Product catalog** → **Starter** product → create **Price** (subscription) → copy Price ID (`price_…`) |
+| **`STRIPE_PRICE_ID_PRO`** | Same as above for **Pro** |
 
-**Webhook-URL (Production):**
+**Webhook URL (production):**
 
-`https://<DEINE_DOMAIN>/api/stripe/webhook`
+`https://<YOUR_DOMAIN>/api/stripe/webhook`
 
-Empfohlene Events (mindestens): `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`.
+Recommended events (at minimum): `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`.
 
-> **Hinweis:** Im Code werden aktuell **`STRIPE_PRICE_ID_STARTER`** und **`STRIPE_PRICE_ID_PRO`** genutzt. Der Free-Plan läuft ohne Stripe-Preis. `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` und `STRIPE_PRICE_ID_FREE` aus dem Projekt-Brief sind für dieses MVP **nicht zwingend** verdrahtet (Checkout läuft serverseitig per Secret Key).
+> **Note:** The codebase currently uses **`STRIPE_PRICE_ID_STARTER`** and **`STRIPE_PRICE_ID_PRO`**. The free plan does not use a Stripe price. `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` and `STRIPE_PRICE_ID_FREE` from the project brief are **not required** for this MVP (Checkout runs server-side with the secret key).
 
-Alle genannten Keys in **Vercel → Settings → Environment Variables** setzen und neu deployen.
+Set all keys in **Vercel → Settings → Environment Variables** and redeploy.
 
-## Wichtige API-Routen
+## Key API routes
 
-| Methode | Pfad | Beschreibung |
-|---------|------|--------------|
-| `GET` | `/api/health` | Healthcheck |
-| `GET`/`POST` | `/api/qrcodes` | Session-Cookie oder `Authorization: Bearer <API-Key>` |
-| `GET`/`PATCH`/`DELETE` | `/api/qrcodes/[id]` | Authentifiziert (Session) |
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/health` | Health check |
+| `GET`/`POST` | `/api/qrcodes` | Session cookie or `Authorization: Bearer <API-Key>` |
+| `GET`/`PATCH`/`DELETE` | `/api/qrcodes/[id]` | Authenticated (session) |
 | `GET` | `/api/analytics/[id]` | Analytics |
-| `POST` | `/api/billing/create-checkout-session` | Stripe Checkout starten |
-| `POST` | `/api/stripe/webhook` | Stripe Webhooks |
-| `GET` | `/q/[id]` | Öffentlicher Redirect |
+| `POST` | `/api/billing/create-checkout-session` | Start Stripe Checkout |
+| `POST` | `/api/stripe/webhook` | Stripe webhooks |
+| `GET` | `/q/[id]` | Public redirect |
 
-API-Keys verwalten: Dashboard **Entwickler** (`/dashboard/developer`).
+Manage API keys: dashboard **Developer** (`/dashboard/developer`).
 
 ## Deployment
 
-- **Vercel**: Repo verbinden, Env-Variablen setzen, Production-Deploy.
-- **Datenbank**: Supabase-Migrationen / SQL wie in `prisma/migrations/` dokumentiert anwenden.
+- **Vercel**: connect the repo, set env vars, deploy to production.
+- **Database**: apply Supabase migrations / SQL as documented in `prisma/migrations/`.
 
-## Roadmap (aus Projekt-Brief – was noch „nice“ wäre)
+## Roadmap (from project brief — nice-to-haves)
 
-- [ ] Kampagne / Gruppierung ausbauen  
-- [ ] Geo- & Geräte-Breakdown verfeinern  
-- [ ] CSV-Export  
-- [ ] Team-Accounts  
-- [ ] Supabase **Storage** für QR-Bilder/Logos (aktuell u. a. Data-URL-Generierung)  
-- [ ] API-Key optional für weitere Routen (`PATCH`/`DELETE`/`analytics`)  
-- [ ] PostHog: alle im Brief genannten Server-Events konsistent prüfen  
+- [ ] Expand campaigns / grouping  
+- [ ] Refine geo & device breakdowns  
+- [ ] CSV export  
+- [ ] Team accounts  
+- [ ] Supabase **Storage** for QR images/logos (currently includes data-URL generation)  
+- [ ] Optional API key for more routes (`PATCH`/`DELETE`/`analytics`)  
+- [ ] PostHog: align all server events mentioned in the brief  
 
-Siehe auch `simple-qr-analytics-cursor-brief.md` für die vollständige Spezifikation.
+See `simple-qr-analytics-cursor-brief.md` for the full specification.
 
-## Lizenz
+## License
 
-Private / wie im Repository festgelegt.
+Private / as defined in this repository.
