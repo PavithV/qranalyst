@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { createHash } from "crypto";
+import { createHash, randomUUID } from "crypto";
 import { posthogCapture } from "@/lib/posthog/capture";
 
 export const dynamic = "force-dynamic";
@@ -153,6 +153,7 @@ export async function GET(
 
         if (scanLogged) {
           await supabaseAdmin.from("scan_events").insert({
+          id: randomUUID(),
             qr_code_id: id,
             user_agent: userAgent ?? null,
             referrer: referrer ?? null,

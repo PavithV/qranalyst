@@ -81,7 +81,9 @@ export default function CreateQrCodeForm() {
 
       const body = await res.json().catch(() => null);
       if (!res.ok) {
-        setError(body?.error ?? "Fehler beim Erstellen des QR-Codes.");
+        const baseError = body?.error ?? "Fehler beim Erstellen des QR-Codes.";
+        const details = body?.details ? `: ${body.details}` : "";
+        setError(`${baseError}${details}`);
         setLoading(false);
         return;
       }

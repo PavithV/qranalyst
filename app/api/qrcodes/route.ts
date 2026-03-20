@@ -104,6 +104,7 @@ export async function POST(req: Request) {
   const base = appUrl.replace(/\/$/, "");
 
   // Kollisionen (sehr selten) ausgleichen.
+  let lastInsertErrorMessage: string | null = null;
   for (let attempt = 0; attempt < 5; attempt++) {
     const id = generateShortId(12);
     const shortPath = `/q/${id}`;
@@ -118,6 +119,8 @@ export async function POST(req: Request) {
       campaign: parsed.data.campaign ?? null,
       color: parsed.data.color ?? null,
       logo_url: parsed.data.logo_url ?? null,
+      // In der Migration ist `updated_at` NOT NULL ohne Default -> muss explizit gesetzt werden.
+      updated_at: new Date().toISOString(),
     };
 
     const { error: insertError } = await supabase
@@ -126,6 +129,7 @@ export async function POST(req: Request) {
 
     if (insertError) {
       // Bei PK-Kollision: erneut versuchen.
+      lastInsertErrorMessage = insertError.message;
       continue;
     }
 
@@ -140,7 +144,7 @@ export async function POST(req: Request) {
   }
 
   return NextResponse.json(
-    { error: "Konnte nach mehreren Versuchen keinen QR-Code erstellen." },
+    { error: "Konnte nach mehreren Versuchen keinen QR-Code erstellen.", details: lastInsertErrorMessage },
     { status: 409 },
   );
 }

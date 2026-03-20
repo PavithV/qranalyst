@@ -66,6 +66,7 @@ export default async function DashboardLayout({
         plan: "FREE",
         status: "active",
         current_period_end: null,
+        updated_at: new Date().toISOString(),
       },
       { onConflict: "user_id" },
     );
