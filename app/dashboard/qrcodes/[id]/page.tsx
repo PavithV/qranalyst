@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { z } from "zod";
+import { ArrowLeft, ArrowUpRight, BarChart3 } from "lucide-react";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getQrAnalytics } from "@/lib/analytics/get-qr-analytics";
@@ -46,39 +47,41 @@ export default async function QrCodeAnalyticsPage({
   });
 
   return (
-    <div className="min-h-screen p-6">
-      <div className="max-w-3xl mx-auto flex flex-col gap-6">
+    <div className="mx-auto w-full max-w-4xl">
+      <div className="flex flex-col gap-6">
         <div className="flex flex-col gap-2">
-          <h1 className="text-2xl font-semibold">Analytics</h1>
-          <p className="text-zinc-600">
+          <h1 className="text-2xl font-semibold tracking-tight">Analytics</h1>
+          <p className="text-sm text-muted-foreground">
             QR-Code:{" "}
             <span className="font-mono text-xs">{qr.id}</span>
           </p>
           <div className="flex flex-wrap gap-3 items-center">
-            <Link className="underline text-sm" href="/dashboard">
+            <Link className="inline-flex h-9 items-center gap-2 rounded-md border border-border px-3 text-sm hover:bg-muted" href="/dashboard">
+              <ArrowLeft className="size-4" />
               Zurück
             </Link>
             <Link
-              className="rounded-lg border px-3 py-1 text-sm hover:bg-zinc-50"
+              className="inline-flex h-9 items-center gap-1 rounded-md border border-border bg-background px-3 text-sm hover:bg-muted"
               href={`/q/${qr.id}`}
               target="_blank"
               rel="noreferrer"
             >
               Public Redirect öffnen
+              <ArrowUpRight className="size-3.5" />
             </Link>
           </div>
         </div>
 
-        <section className="rounded-xl border bg-white p-4 flex flex-col gap-3">
+        <section className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4 shadow-sm">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
-              <p className="text-sm text-zinc-500">
+              <p className="text-sm text-muted-foreground">
                 Total Scans (Retention)
               </p>
               <p className="text-3xl font-semibold">{analytics.totalScans}</p>
             </div>
             <div>
-              <p className="text-sm text-zinc-500">
+              <p className="text-sm text-muted-foreground">
                 Unique Scanner (approx.)
               </p>
               <p className="text-3xl font-semibold">
@@ -88,15 +91,18 @@ export default async function QrCodeAnalyticsPage({
           </div>
 
           {analytics.truncated ? (
-            <p className="text-sm text-amber-700">
+            <p className="text-sm text-muted-foreground">
               Hinweis: Es wurden nur die neuesten Events geladen.
             </p>
           ) : null}
         </section>
 
-        <section className="rounded-xl border bg-white p-4 flex flex-col gap-4">
+        <section className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4 shadow-sm">
           <div>
-            <h2 className="text-lg font-semibold">Scans nach Tag</h2>
+            <h2 className="inline-flex items-center gap-2 text-lg font-semibold">
+              <BarChart3 className="size-4 text-muted-foreground" />
+              Scans nach Tag
+            </h2>
             {analytics.scansByDay.length > 0 ? (
               <div className="mt-2 flex flex-col gap-2">
                 {analytics.scansByDay.slice(-7).map((d) => (
@@ -104,13 +110,13 @@ export default async function QrCodeAnalyticsPage({
                     key={d.day}
                     className="flex items-center justify-between text-sm"
                   >
-                    <span className="text-zinc-600">{d.day}</span>
+                    <span className="text-muted-foreground">{d.day}</span>
                     <span className="font-medium">{d.scans}</span>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-zinc-600 mt-2">Noch keine Scans.</p>
+              <p className="mt-2 text-sm text-muted-foreground">Noch keine Scans.</p>
             )}
           </div>
 
@@ -124,13 +130,13 @@ export default async function QrCodeAnalyticsPage({
                       key={c.countryCode}
                       className="flex items-center justify-between text-sm"
                     >
-                      <span className="text-zinc-600">{c.countryCode}</span>
+                    <span className="text-muted-foreground">{c.countryCode}</span>
                       <span className="font-medium">{c.scans}</span>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-zinc-600 mt-2">
+              <p className="mt-2 text-sm text-muted-foreground">
                   Noch keine Geo-Daten.
                 </p>
               )}
@@ -145,13 +151,13 @@ export default async function QrCodeAnalyticsPage({
                       key={d.deviceType}
                       className="flex items-center justify-between text-sm"
                     >
-                      <span className="text-zinc-600">{d.deviceType}</span>
+                    <span className="text-muted-foreground">{d.deviceType}</span>
                       <span className="font-medium">{d.scans}</span>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-zinc-600 mt-2">
+              <p className="mt-2 text-sm text-muted-foreground">
                   Noch keine Device-Daten.
                 </p>
               )}

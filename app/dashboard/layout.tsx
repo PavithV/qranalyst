@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
+import Link from "next/link";
 
 import { redirect } from "next/navigation";
+import { CreditCard, LayoutDashboard, QrCode } from "lucide-react";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
@@ -27,10 +29,10 @@ export default async function DashboardLayout({
   const hasServiceRoleKey = !!process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!hasServiceRoleKey) {
     return (
-      <div className="min-h-screen p-6">
-        <div className="max-w-3xl mx-auto rounded-xl border bg-white p-4 text-zinc-800">
+      <div className="mx-auto w-full max-w-6xl px-6 py-10">
+        <div className="rounded-xl border border-border bg-card p-5 text-card-foreground shadow-sm">
           <h1 className="text-lg font-semibold">Konfiguration fehlt</h1>
-          <p className="text-sm text-zinc-600 mt-2">
+          <p className="mt-2 text-sm text-muted-foreground">
             Bitte setze in Vercel unter <span className="font-mono">Settings → Environment Variables</span> die Variable{" "}
             <span className="font-mono">SUPABASE_SERVICE_ROLE_KEY</span>. Ohne sie kann das Dashboard
             nicht pro User initialisieren.
@@ -72,10 +74,10 @@ export default async function DashboardLayout({
     );
   } catch {
     return (
-      <div className="min-h-screen p-6">
-        <div className="max-w-3xl mx-auto rounded-xl border bg-white p-4 text-zinc-800">
+      <div className="mx-auto w-full max-w-6xl px-6 py-10">
+        <div className="rounded-xl border border-border bg-card p-5 text-card-foreground shadow-sm">
           <h1 className="text-lg font-semibold">Provisioning fehlgeschlagen</h1>
-          <p className="text-sm text-zinc-600 mt-2">
+          <p className="mt-2 text-sm text-muted-foreground">
             Beim Initialisieren der Supabase-Tabellen ist ein Fehler aufgetreten. Schau in die Vercel
             Deployment Logs nach der konkreten Exception.
           </p>
@@ -84,6 +86,34 @@ export default async function DashboardLayout({
     );
   }
 
-  return <>{children}</>;
+  return (
+    <div className="min-h-full bg-muted/30">
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-6 py-8">
+        <div className="rounded-xl border border-border bg-card p-2 shadow-sm">
+          <nav className="flex flex-wrap items-center gap-2">
+            <Link
+              href="/dashboard"
+              className="inline-flex h-9 items-center gap-2 rounded-md px-3 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              <LayoutDashboard className="size-4" />
+              Übersicht
+            </Link>
+            <Link
+              href="/dashboard/billing"
+              className="inline-flex h-9 items-center gap-2 rounded-md px-3 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              <CreditCard className="size-4" />
+              Billing
+            </Link>
+            <span className="ml-auto inline-flex items-center gap-2 rounded-md border border-border bg-background px-3 py-1.5 text-xs text-muted-foreground">
+              <QrCode className="size-3.5" />
+              Secure dashboard area
+            </span>
+          </nav>
+        </div>
+        <div className="rounded-2xl border border-border bg-background p-4 shadow-sm md:p-6">{children}</div>
+      </div>
+    </div>
+  );
 }
 

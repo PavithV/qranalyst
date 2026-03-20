@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Geist, Geist_Mono } from "next/font/google";
+import { QrCode, ArrowRight } from "lucide-react";
 import "./globals.css";
 import PageViewTracker from "@/components/posthog/PageViewTracker";
 
@@ -24,13 +26,35 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col">
+    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full`}>
+      <body className="min-h-full flex flex-col bg-background text-foreground font-sans">
         <PageViewTracker />
-        {children}
+        <header className="sticky top-0 z-40 border-b border-border/80 bg-background/90 backdrop-blur">
+          <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-6">
+            <Link href="/" className="inline-flex items-center gap-2 text-sm font-medium">
+              <span className="inline-flex size-8 items-center justify-center rounded-md border border-border bg-muted/60">
+                <QrCode className="size-4" />
+              </span>
+              <span>QR Analytics</span>
+            </Link>
+            <nav className="flex items-center gap-2">
+              <Link
+                href="/login"
+                className="inline-flex h-9 items-center rounded-md border border-border px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              >
+                Login
+              </Link>
+              <Link
+                href="/signup"
+                className="inline-flex h-9 items-center gap-1 rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
+              >
+                Sign up
+                <ArrowRight className="size-4" />
+              </Link>
+            </nav>
+          </div>
+        </header>
+        <main className="flex-1">{children}</main>
       </body>
     </html>
   );

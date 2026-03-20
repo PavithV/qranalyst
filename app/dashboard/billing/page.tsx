@@ -1,6 +1,7 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import UpgradePlanButtons from "@/components/dashboard/UpgradePlanButtons";
 import BillingOutcomeEvents from "@/components/dashboard/BillingOutcomeEvents";
+import { BadgeCheck, CreditCard } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -33,29 +34,33 @@ export default async function BillingPage({
     : (subscription?.plan ?? "FREE")) as "FREE" | "STARTER" | "PRO";
 
   return (
-    <div className="min-h-screen p-6">
-      <div className="max-w-2xl mx-auto flex flex-col gap-6">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-semibold">Billing</h1>
-          <p className="text-zinc-600">
+    <div className="mx-auto w-full max-w-3xl">
+      <div className="flex flex-col gap-6">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex flex-col gap-1">
+            <h1 className="text-2xl font-semibold tracking-tight">Billing</h1>
+            <p className="text-sm text-muted-foreground">
             Aktueller Status:{" "}
-            <span className="font-medium">{subscription?.status ?? "-"}</span>{" "}
-            · Plan: <span className="font-medium">{subscription?.plan ?? "-"}</span>
-          </p>
+              <span className="font-medium text-foreground">{subscription?.status ?? "-"}</span>{" "}
+              · Plan: <span className="font-medium text-foreground">{subscription?.plan ?? "-"}</span>
+            </p>
+          </div>
+          <CreditCard className="mt-1 size-5 text-muted-foreground" />
         </div>
 
-        <section className="rounded-xl border bg-white p-4">
-          <h2 className="text-lg font-semibold mb-2">Plan upgraden</h2>
+        <section className="rounded-xl border border-border bg-card p-5 shadow-sm">
+          <h2 className="mb-2 text-lg font-semibold">Plan upgraden</h2>
           <UpgradePlanButtons currentPlan={subscription?.plan ?? "FREE"} />
         </section>
 
         {outcome === "success" ? (
-          <p className="text-sm text-emerald-700">
+          <p className="inline-flex items-center gap-2 rounded-lg border border-border bg-muted/50 px-3 py-2 text-sm text-foreground">
+            <BadgeCheck className="size-4" />
             Checkout abgeschlossen. Webhook aktualisiert das Abo.
           </p>
         ) : null}
         {outcome === "canceled" ? (
-          <p className="text-sm text-zinc-600">
+          <p className="text-sm text-muted-foreground">
             Checkout abgebrochen.
           </p>
         ) : null}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { ArrowUpRight, Rocket } from "lucide-react";
 import { posthogCaptureClient } from "@/lib/posthog/capture-client";
 
 type Plan = "FREE" | "STARTER" | "PRO";
@@ -64,16 +65,17 @@ export default function UpgradePlanButtons({ currentPlan }: { currentPlan: Plan 
   const proDisabled = currentPlan === "PRO";
 
   return (
-    <div className="flex flex-col gap-3">
-      {error ? <p className="text-sm text-red-600">{error}</p> : null}
+    <div className="flex flex-col gap-4">
+      {error ? <p className="text-sm text-destructive">{error}</p> : null}
 
-      <div className="flex flex-col sm:flex-row gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row">
         <button
           type="button"
           disabled={starterDisabled || loadingPlan === "STARTER"}
           onClick={() => startCheckout("STARTER")}
-          className="rounded-lg border px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-border bg-background px-4 text-sm font-medium transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
         >
+          <Rocket className="size-4" />
           {loadingPlan === "STARTER" ? "Weiter..." : "Starter upgraden"}
         </button>
 
@@ -81,8 +83,9 @@ export default function UpgradePlanButtons({ currentPlan }: { currentPlan: Plan 
           type="button"
           disabled={proDisabled || loadingPlan === "PRO"}
           onClick={() => startCheckout("PRO")}
-          className="rounded-lg bg-black text-white px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
         >
+          <ArrowUpRight className="size-4" />
           {loadingPlan === "PRO" ? "Weiter..." : "Pro upgraden"}
         </button>
       </div>
