@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import QrCodePreviewButton from "@/components/dashboard/QrCodePreviewButton";
 
 export default function QrCodeActions({ id }: { id: string }) {
   const router = useRouter();
@@ -31,30 +32,34 @@ export default function QrCodeActions({ id }: { id: string }) {
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <Link
-        className="inline-flex h-9 items-center rounded-md border border-border px-3 text-sm hover:bg-muted"
-        href={`/q/${id}`}
-        target="_blank"
-        rel="noreferrer"
-      >
-        QR testen
-      </Link>
-      <Link
-        className="inline-flex h-9 items-center rounded-md bg-primary px-3 text-sm text-primary-foreground hover:opacity-90"
-        href={`/dashboard/qrcodes/${id}`}
-      >
-        Analytics
-      </Link>
-      <button
-        type="button"
-        onClick={onDelete}
-        disabled={deleting}
-        className="inline-flex h-9 items-center rounded-md border border-destructive/30 px-3 text-sm text-destructive hover:bg-destructive/10 disabled:opacity-50"
-      >
-        {deleting ? "Lösche..." : "Löschen"}
-      </button>
-      {error ? <p className="w-full text-xs text-destructive">{error}</p> : null}
+    <div className="flex w-full flex-col gap-2">
+      <div className="flex flex-wrap items-center gap-2">
+        <Link
+          className="inline-flex h-9 items-center rounded-md border border-border px-3 text-sm hover:bg-muted"
+          href={`/q/${id}`}
+          target="_blank"
+          rel="noreferrer"
+        >
+          QR testen
+        </Link>
+        <Link
+          className="inline-flex h-9 items-center rounded-md bg-primary px-3 text-sm text-primary-foreground hover:opacity-90"
+          href={`/dashboard/qrcodes/${id}`}
+        >
+          Analytics
+        </Link>
+        <button
+          type="button"
+          onClick={onDelete}
+          disabled={deleting}
+          className="inline-flex h-9 items-center rounded-md border border-destructive/30 px-3 text-sm text-destructive hover:bg-destructive/10 disabled:opacity-50"
+        >
+          {deleting ? "Lösche..." : "Löschen"}
+        </button>
+      </div>
+
+      <QrCodePreviewButton id={id} />
+      {error ? <p className="text-xs text-destructive">{error}</p> : null}
     </div>
   );
 }
