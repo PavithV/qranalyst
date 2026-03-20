@@ -29,6 +29,7 @@ model Profile {
   qrCodes        QrCode[]
   subscriptions  Subscription[]
   usageLimit     UsageLimit?
+  apiKeys        ApiKey[]
 
   @@map("profiles")
 }
@@ -116,5 +117,22 @@ model UsageLimit {
   user Profile @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("usage_limits")
+}
+
+model ApiKey {
+  id         String   @id @default(uuid())
+  /// SHA-256 hex of the full secret (never store plaintext)
+  keyHash    String   @unique @map("key")
+  /// Short preview for the dashboard, e.g. first chars of the secret
+  keyPrefix  String   @map("key_prefix")
+  userId     String   @map("user_id")
+  name       String
+  createdAt  DateTime @default(now()) @map("created_at")
+  lastUsedAt DateTime? @map("last_used_at")
+
+  user Profile @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("api_keys")
 }
 

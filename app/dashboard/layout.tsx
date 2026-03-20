@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 
 import { redirect } from "next/navigation";
-import { CreditCard, LayoutDashboard, QrCode } from "lucide-react";
+import { Code2, CreditCard, LayoutDashboard, QrCode } from "lucide-react";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
@@ -104,6 +104,13 @@ export default async function DashboardLayout({
             >
               <CreditCard className="size-4" />
               Billing
+            </Link>
+            <Link
+              href="/dashboard/developer"
+              className="inline-flex h-9 items-center gap-2 rounded-md px-3 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              <Code2 className="size-4" />
+              Entwickler
             </Link>
             <span className="ml-auto inline-flex items-center gap-2 rounded-md border border-border bg-background px-3 py-1.5 text-xs text-muted-foreground">
               <QrCode className="size-3.5" />
