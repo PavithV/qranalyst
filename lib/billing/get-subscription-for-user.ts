@@ -3,7 +3,11 @@ import type { SubscriptionPlan, SubscriptionStatus } from "@prisma/client";
 import { getPrisma } from "@/lib/prisma";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
-type SubRow = { plan: SubscriptionPlan; status: SubscriptionStatus };
+export type SubscriptionDisplay = {
+  plan: SubscriptionPlan;
+  status: SubscriptionStatus;
+  stripeCustomerId: string | null;
+};
 
 /**
  * Liest Abo: zuerst Prisma (Postgres), bei leerem Ergebnis Fallback Service Role (wie im Dashboard),
@@ -11,11 +15,11 @@ type SubRow = { plan: SubscriptionPlan; status: SubscriptionStatus };
  */
 export async function getSubscriptionForUser(
   userId: string,
-): Promise<SubRow | null> {
+): Promise<SubscriptionDisplay | null> {
   try {
     const sub = await getPrisma().subscription.findUnique({
       where: { userId },
-      select: { plan: true, status: true },
+      select: { plan: true, status: true, stripeCustomerId: true },
     });
     if (sub) return sub;
   } catch {
@@ -26,7 +30,7 @@ export async function getSubscriptionForUser(
     const admin = createSupabaseAdminClient();
     const { data, error } = await admin
       .from("subscriptions")
-      .select("plan,status")
+      .select("plan,status,stripe_customer_id")
       .eq("user_id", userId)
       .maybeSingle();
 
@@ -37,6 +41,7 @@ export async function getSubscriptionForUser(
     return {
       plan: data.plan as SubscriptionPlan,
       status: data.status as SubscriptionStatus,
+      stripeCustomerId: (data.stripe_customer_id as string | null) ?? null,
     };
   } catch {
     return null;

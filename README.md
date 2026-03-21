@@ -83,6 +83,8 @@ In the [Stripe Dashboard](https://dashboard.stripe.com/) (for testing, enable **
 
 Recommended events (at minimum): `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`.
 
+**Customer Portal (cancel / payment methods):** In Stripe → **Settings → Billing → Customer portal**, activate the portal so users can open **Abo verwalten / kündigen** on `/dashboard/billing`.
+
 > **Note:** The codebase currently uses **`STRIPE_PRICE_ID_STARTER`** and **`STRIPE_PRICE_ID_PRO`**. The free plan does not use a Stripe price. `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` and `STRIPE_PRICE_ID_FREE` from the project brief are **not required** for this MVP (Checkout runs server-side with the secret key).
 
 Set all keys in **Vercel → Settings → Environment Variables** and redeploy.

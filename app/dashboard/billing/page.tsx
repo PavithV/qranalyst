@@ -7,6 +7,7 @@ import BillingRefreshOnSuccess from "@/components/dashboard/BillingRefreshOnSucc
 import BillingSyncCheckout from "@/components/dashboard/BillingSyncCheckout";
 import UpgradePlanButtons from "@/components/dashboard/UpgradePlanButtons";
 import BillingOutcomeEvents from "@/components/dashboard/BillingOutcomeEvents";
+import ManageSubscriptionButton from "@/components/dashboard/ManageSubscriptionButton";
 import { BadgeCheck, CreditCard } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -54,6 +55,8 @@ export default async function BillingPage({
     ? await getSubscriptionForUser(user.id)
     : null;
 
+  const hasStripeCustomer = Boolean(subscription?.stripeCustomerId);
+
   const planFromQuery = (sp?.plan ?? "").toUpperCase();
   const planFromDb = subscription?.plan ?? null;
   /** DB hat Vorrang; nach Checkout kann die URL den Plan zeigen, solange die DB noch leer ist. */
@@ -85,6 +88,14 @@ export default async function BillingPage({
         <section className="rounded-xl border border-border bg-card p-5 shadow-sm">
           <h2 className="mb-2 text-lg font-semibold">Plan upgraden</h2>
           <UpgradePlanButtons currentPlan={displayPlan} />
+        </section>
+
+        <section className="rounded-xl border border-border bg-card p-5 shadow-sm">
+          <h2 className="mb-3 text-lg font-semibold">Abo verwalten</h2>
+          <ManageSubscriptionButton
+            currentPlan={displayPlan}
+            hasStripeCustomer={hasStripeCustomer}
+          />
         </section>
 
         {outcome === "success" ? (

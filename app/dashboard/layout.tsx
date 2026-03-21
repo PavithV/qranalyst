@@ -55,16 +55,23 @@ export default async function DashboardLayout({
     );
     if (profileErr) throw new Error(profileErr.message);
 
-    const { error: limitsErr } = await supabaseAdmin.from("usage_limits").upsert(
-      {
+    // Nur anlegen wenn noch keine Zeile — sonst würden wir bei jedem Seitenaufruf
+    // bezahlte Pläne/Limits wieder auf FREE überschreiben.
+    const { data: existingLimits } = await supabaseAdmin
+      .from("usage_limits")
+      .select("user_id")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (!existingLimits) {
+      const { error: limitsErr } = await supabaseAdmin.from("usage_limits").insert({
         user_id: user.id,
         qr_code_limit: 10,
         monthly_scan_limit: 1000,
         analytics_retention_days: 90,
-      },
-      { onConflict: "user_id" },
-    );
-    if (limitsErr) throw new Error(limitsErr.message);
+      });
+      if (limitsErr) throw new Error(limitsErr.message);
+    }
 
     const { data: existingSub } = await supabaseAdmin
       .from("subscriptions")
@@ -72,18 +79,17 @@ export default async function DashboardLayout({
       .eq("user_id", user.id)
       .maybeSingle();
 
-    const { error: subErr } = await supabaseAdmin.from("subscriptions").upsert(
-      {
-        id: existingSub?.id ?? randomUUID(),
+    if (!existingSub) {
+      const { error: subErr } = await supabaseAdmin.from("subscriptions").insert({
+        id: randomUUID(),
         user_id: user.id,
         plan: "FREE",
         status: "active",
         current_period_end: null,
         updated_at: new Date().toISOString(),
-      },
-      { onConflict: "user_id" },
-    );
-    if (subErr) throw new Error(subErr.message);
+      });
+      if (subErr) throw new Error(subErr.message);
+    }
   } catch {
     return (
       <div className="mx-auto w-full max-w-6xl px-6 py-10">
