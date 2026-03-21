@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { getSubscriptionForUser } from "@/lib/billing/get-subscription-for-user";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -15,11 +16,7 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { data: subscription } = await supabase
-    .from("subscriptions")
-    .select("plan,status")
-    .eq("user_id", user.id)
-    .maybeSingle();
+  const subscription = await getSubscriptionForUser(user.id);
 
   const { data: usage_limits } = await supabase
     .from("usage_limits")

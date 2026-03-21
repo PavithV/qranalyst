@@ -1,4 +1,6 @@
 import type { ReactNode } from "react";
+import { randomUUID } from "node:crypto";
+
 import Link from "next/link";
 
 import { redirect } from "next/navigation";
@@ -44,15 +46,16 @@ export default async function DashboardLayout({
 
   try {
     const supabaseAdmin = createSupabaseAdminClient();
-    await supabaseAdmin.from("profiles").upsert(
+    const { error: profileErr } = await supabaseAdmin.from("profiles").upsert(
       {
         id: user.id,
         email: user.email ?? "",
       },
       { onConflict: "id" },
     );
+    if (profileErr) throw new Error(profileErr.message);
 
-    await supabaseAdmin.from("usage_limits").upsert(
+    const { error: limitsErr } = await supabaseAdmin.from("usage_limits").upsert(
       {
         user_id: user.id,
         qr_code_limit: 10,
@@ -61,9 +64,17 @@ export default async function DashboardLayout({
       },
       { onConflict: "user_id" },
     );
+    if (limitsErr) throw new Error(limitsErr.message);
 
-    await supabaseAdmin.from("subscriptions").upsert(
+    const { data: existingSub } = await supabaseAdmin
+      .from("subscriptions")
+      .select("id")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    const { error: subErr } = await supabaseAdmin.from("subscriptions").upsert(
       {
+        id: existingSub?.id ?? randomUUID(),
         user_id: user.id,
         plan: "FREE",
         status: "active",
@@ -72,6 +83,7 @@ export default async function DashboardLayout({
       },
       { onConflict: "user_id" },
     );
+    if (subErr) throw new Error(subErr.message);
   } catch {
     return (
       <div className="mx-auto w-full max-w-6xl px-6 py-10">

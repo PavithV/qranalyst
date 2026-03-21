@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 
+import { getSubscriptionForUser } from "@/lib/billing/get-subscription-for-user";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import BillingRefreshOnSuccess from "@/components/dashboard/BillingRefreshOnSuccess";
 import UpgradePlanButtons from "@/components/dashboard/UpgradePlanButtons";
@@ -20,11 +21,9 @@ export default async function BillingPage({
     data: { user },
   } = await supabase.auth.getUser();
 
-  const { data: subscription } = await supabase
-    .from("subscriptions")
-    .select("plan,status")
-    .eq("user_id", user?.id ?? "")
-    .maybeSingle();
+  const subscription = user?.id
+    ? await getSubscriptionForUser(user.id)
+    : null;
 
   const outcome =
     sp?.success === "1"
@@ -34,9 +33,13 @@ export default async function BillingPage({
         : null;
 
   const planFromQuery = (sp?.plan ?? "").toUpperCase();
-  const planForEvents = (planFromQuery === "STARTER" || planFromQuery === "PRO"
-    ? (planFromQuery as "STARTER" | "PRO")
-    : (subscription?.plan ?? "FREE")) as "FREE" | "STARTER" | "PRO";
+  const planFromDb = subscription?.plan ?? null;
+  /** DB hat Vorrang; nach Checkout kann die URL den Plan zeigen, solange die DB noch leer ist. */
+  const displayPlan = (planFromDb ??
+    (planFromQuery === "STARTER" || planFromQuery === "PRO"
+      ? planFromQuery
+      : "FREE")) as "FREE" | "STARTER" | "PRO";
+  const planForEvents = displayPlan;
 
   return (
     <div className="mx-auto w-full max-w-3xl">
@@ -58,7 +61,7 @@ export default async function BillingPage({
 
         <section className="rounded-xl border border-border bg-card p-5 shadow-sm">
           <h2 className="mb-2 text-lg font-semibold">Plan upgraden</h2>
-          <UpgradePlanButtons currentPlan={subscription?.plan ?? "FREE"} />
+          <UpgradePlanButtons currentPlan={displayPlan} />
         </section>
 
         {outcome === "success" ? (

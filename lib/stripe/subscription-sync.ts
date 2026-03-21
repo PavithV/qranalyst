@@ -1,3 +1,5 @@
+import { randomUUID } from "node:crypto";
+
 import type Stripe from "stripe";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
@@ -72,8 +74,16 @@ export async function syncPaidSubscriptionToSupabase(
   const usage = planToUsageLimits(params.plan);
   const status = mapStripeSubscriptionStatusToDb(params.status);
 
+  // `subscriptions.id` ist NOT NULL ohne Default — INSERT braucht eine ID.
+  const { data: existingSub } = await supabaseAdmin
+    .from("subscriptions")
+    .select("id")
+    .eq("user_id", params.userId)
+    .maybeSingle();
+
   const { error: subErr } = await supabaseAdmin.from("subscriptions").upsert(
     {
+      id: existingSub?.id ?? randomUUID(),
       user_id: params.userId,
       stripe_customer_id: params.stripeCustomerId,
       stripe_subscription_id: params.stripeSubscriptionId,
