@@ -2,6 +2,7 @@ import { Suspense } from "react";
 
 import { getSubscriptionForUser } from "@/lib/billing/get-subscription-for-user";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { reconcileCheckoutSessionFromStripe } from "@/lib/stripe/reconcile-checkout-session";
 import BillingRefreshOnSuccess from "@/components/dashboard/BillingRefreshOnSuccess";
 import UpgradePlanButtons from "@/components/dashboard/UpgradePlanButtons";
 import BillingOutcomeEvents from "@/components/dashboard/BillingOutcomeEvents";
@@ -12,7 +13,12 @@ export const dynamic = "force-dynamic";
 export default async function BillingPage({
   searchParams,
 }: {
-  searchParams: Promise<{ success?: string; canceled?: string; plan?: string }>;
+  searchParams: Promise<{
+    success?: string;
+    canceled?: string;
+    plan?: string;
+    session_id?: string;
+  }>;
 }) {
   const sp = await searchParams;
 
@@ -21,16 +27,31 @@ export default async function BillingPage({
     data: { user },
   } = await supabase.auth.getUser();
 
-  const subscription = user?.id
-    ? await getSubscriptionForUser(user.id)
-    : null;
-
   const outcome =
     sp?.success === "1"
       ? "success"
       : sp?.canceled === "1"
         ? "canceled"
         : null;
+
+  const stripeSessionId =
+    typeof sp.session_id === "string" && sp.session_id.length > 0 ? sp.session_id : null;
+
+  /** Direkt nach Checkout: Abo von Stripe lesen und per Prisma speichern (unabhängig vom Webhook). */
+  let reconcileError: string | null = null;
+  if (user?.id && outcome === "success" && stripeSessionId) {
+    const result = await reconcileCheckoutSessionFromStripe({
+      sessionId: stripeSessionId,
+      expectedUserId: user.id,
+    });
+    if (!result.ok) {
+      reconcileError = result.error;
+    }
+  }
+
+  const subscription = user?.id
+    ? await getSubscriptionForUser(user.id)
+    : null;
 
   const planFromQuery = (sp?.plan ?? "").toUpperCase();
   const planFromDb = subscription?.plan ?? null;
@@ -65,10 +86,24 @@ export default async function BillingPage({
         </section>
 
         {outcome === "success" ? (
-          <p className="inline-flex items-center gap-2 rounded-lg border border-border bg-muted/50 px-3 py-2 text-sm text-foreground">
-            <BadgeCheck className="size-4" />
-            Checkout abgeschlossen. Webhook aktualisiert das Abo.
-          </p>
+          <div className="space-y-2">
+            <p className="inline-flex items-center gap-2 rounded-lg border border-border bg-muted/50 px-3 py-2 text-sm text-foreground">
+              <BadgeCheck className="size-4" />
+              Checkout abgeschlossen. Abo wurde mit Stripe abgeglichen.
+            </p>
+            {reconcileError ? (
+              <p className="text-sm text-destructive">
+                Sync-Hinweis: {reconcileError} — prüfe{" "}
+                <code className="rounded bg-muted px-1">STRIPE_SECRET_KEY</code> und Vercel-Logs.
+              </p>
+            ) : null}
+            {!stripeSessionId && outcome === "success" ? (
+              <p className="text-xs text-muted-foreground">
+                Hinweis: Ohne <code className="rounded bg-muted px-1">session_id</code> in der URL
+                (neuer Checkout nötig) kann der Plan nur per Webhook aktualisiert werden.
+              </p>
+            ) : null}
+          </div>
         ) : null}
         {outcome === "canceled" ? (
           <p className="text-sm text-muted-foreground">

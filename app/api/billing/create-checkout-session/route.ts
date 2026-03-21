@@ -56,7 +56,8 @@ export async function POST(req: Request) {
   }
 
   const baseApp = appUrl.replace(/\/$/, "");
-  const successUrl = `${baseApp}/dashboard/billing?success=1&plan=${parsed.data.plan}`;
+  // Stripe ersetzt {CHECKOUT_SESSION_ID} beim Redirect — ermöglicht serverseitigen Sync ohne Webhook.
+  const successUrl = `${baseApp}/dashboard/billing?success=1&plan=${parsed.data.plan}&session_id={CHECKOUT_SESSION_ID}`;
   const cancelUrl = `${baseApp}/dashboard/billing?canceled=1&plan=${parsed.data.plan}`;
 
   // Kunde ermitteln/erstellen
