@@ -99,7 +99,20 @@ Set all keys in **Vercel → Settings → Environment Variables** and redeploy.
 | `POST` | `/api/stripe/webhook` | Stripe webhooks |
 | `GET` | `/q/[id]` | Public redirect |
 
-Manage API keys: dashboard **Developer** (`/dashboard/developer`).
+Manage API keys: dashboard **Developer** (`/dashboard/developer`). **One API key per account.**
+
+### Plan limits (summary)
+
+| Plan | API (`Bearer` on `/api/qrcodes`) | Scans / month (redirect logging) | Active QR codes |
+|------|----------------------------------|----------------------------------|-----------------|
+| **FREE** | 10 / calendar month | 1,000 | 10 |
+| **STARTER** | 5,000 / month | 10,000 | 50 |
+| **PRO** | 100,000 / month | 100,000 | 200 |
+
+- **Monthly API quota** applies only to requests using **`Authorization: Bearer`** (not the logged-in browser session).
+- **Scans per month:** each hit to `GET /q/[id]` counts toward **storing** a row in `scan_events` (analytics). If the user exceeds the monthly scan limit, the **redirect (302) still works** — new scan events are simply **not recorded** until the next month (analytics appear “frozen”).
+
+Apply the SQL migration that creates `api_monthly_usage` (see `prisma/migrations/`) so monthly API usage can be persisted.
 
 ## Deployment
 

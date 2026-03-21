@@ -58,12 +58,25 @@ export async function POST(req: Request) {
     );
   }
 
+  const prisma = getPrisma();
+  const existingCount = await prisma.apiKey.count({
+    where: { userId: user.id },
+  });
+  if (existingCount >= 1) {
+    return NextResponse.json(
+      {
+        error:
+          "Maximal ein API-Key pro Konto. Bitte lösche den bestehenden Key, bevor du einen neuen erstellst.",
+      },
+      { status: 400 },
+    );
+  }
+
   const secret = `sqa_${randomBytes(24).toString("base64url")}`;
   const keyHash = hashApiKeySecret(secret);
   const keyPrefix =
     secret.length > 14 ? `${secret.slice(0, 14)}…` : `${secret}…`;
 
-  const prisma = getPrisma();
   const row = await prisma.apiKey.create({
     data: {
       keyHash,

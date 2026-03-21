@@ -5,7 +5,7 @@ import { z } from "zod";
 import { authenticateApiKey, extractBearerToken, touchApiKeyLastUsed } from "@/lib/auth/api-auth";
 import { generateShortId } from "@/lib/qr/id";
 import { generateQrDataUrl } from "@/lib/qr/generate";
-import { consumeApiKeyRate } from "@/lib/rate-limit/api-key-memory";
+import { consumeApiMonthlyRequest } from "@/lib/rate-limit/api-monthly";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -91,14 +91,15 @@ export async function GET(req: Request) {
   const { ctx } = resolved;
 
   if (ctx.kind === "api_key") {
-    const rl = consumeApiKeyRate(ctx.apiKeyId);
-    if (!rl.ok) {
+    const monthly = await consumeApiMonthlyRequest(ctx.userId);
+    if (!monthly.ok) {
       return NextResponse.json(
-        { error: "Zu viele Anfragen. Bitte später erneut versuchen." },
         {
-          status: 429,
-          headers: { "Retry-After": String(rl.retryAfterSec) },
+          error: "Monatliches API-Limit erreicht.",
+          limit: monthly.limit,
+          used: monthly.used,
         },
+        { status: 429 },
       );
     }
   }
@@ -128,14 +129,15 @@ export async function POST(req: Request) {
   const { ctx } = resolved;
 
   if (ctx.kind === "api_key") {
-    const rl = consumeApiKeyRate(ctx.apiKeyId);
-    if (!rl.ok) {
+    const monthly = await consumeApiMonthlyRequest(ctx.userId);
+    if (!monthly.ok) {
       return NextResponse.json(
-        { error: "Zu viele Anfragen. Bitte später erneut versuchen." },
         {
-          status: 429,
-          headers: { "Retry-After": String(rl.retryAfterSec) },
+          error: "Monatliches API-Limit erreicht.",
+          limit: monthly.limit,
+          used: monthly.used,
         },
+        { status: 429 },
       );
     }
   }

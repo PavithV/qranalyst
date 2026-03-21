@@ -91,11 +91,17 @@ export default function ApiKeysManager() {
   return (
     <div className="flex flex-col gap-6">
       <section className="rounded-xl border border-border bg-card p-5 shadow-sm">
-        <h2 className="mb-3 text-lg font-semibold">Neuen API-Key erstellen</h2>
+        <h2 className="mb-3 text-lg font-semibold">API-Key erstellen</h2>
         <p className="mb-4 text-sm text-muted-foreground">
-          Der vollständige Secret wird nur einmal angezeigt. Speichere ihn sicher (z.&nbsp;B.
-          Passwort-Manager). In der Datenbank liegt nur ein Hash.
+          Pro Konto ist <strong>nur ein Key</strong> möglich. Zum Erneuern den bestehenden Key
+          widerrufen. Der vollständige Secret wird nur einmal angezeigt — in der Datenbank liegt nur
+          ein Hash.
         </p>
+        {keys.length >= 1 ? (
+          <p className="mb-4 rounded-md border border-border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
+            Du hast bereits einen API-Key. Zum Ersetzen bitte unten <strong>Widerrufen</strong> wählen.
+          </p>
+        ) : null}
         <form onSubmit={handleCreate} className="flex flex-col gap-3 sm:flex-row sm:items-end">
           <div className="flex min-w-0 flex-1 flex-col gap-1">
             <label htmlFor="api-key-name" className="text-xs font-medium text-muted-foreground">
@@ -110,7 +116,15 @@ export default function ApiKeysManager() {
               maxLength={120}
             />
           </div>
-          <Button type="submit" disabled={creating || !name.trim()}>
+          <Button
+            type="submit"
+            disabled={creating || !name.trim() || keys.length >= 1}
+            title={
+              keys.length >= 1
+                ? "Es existiert bereits ein Key — bitte zuerst widerrufen."
+                : undefined
+            }
+          >
             {creating ? (
               <>
                 <Loader2 className="mr-2 size-4 animate-spin" />

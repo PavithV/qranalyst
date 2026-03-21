@@ -30,6 +30,7 @@ model Profile {
   subscriptions  Subscription[]
   usageLimit     UsageLimit?
   apiKeys        ApiKey[]
+  apiMonthlyUsage ApiMonthlyUsage[]
 
   @@map("profiles")
 }
@@ -117,6 +118,18 @@ model UsageLimit {
   user Profile @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("usage_limits")
+}
+
+/// Kalendermonat (YYYY-MM), zählt GET/POST /api/qrcodes mit Bearer API-Key
+model ApiMonthlyUsage {
+  userId    String @map("user_id")
+  yearMonth String @map("year_month")
+  count     Int    @default(0)
+
+  user Profile @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, yearMonth])
+  @@map("api_monthly_usage")
 }
 
 model ApiKey {
