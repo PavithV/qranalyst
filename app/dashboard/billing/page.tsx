@@ -1,4 +1,7 @@
+import { Suspense } from "react";
+
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import BillingRefreshOnSuccess from "@/components/dashboard/BillingRefreshOnSuccess";
 import UpgradePlanButtons from "@/components/dashboard/UpgradePlanButtons";
 import BillingOutcomeEvents from "@/components/dashboard/BillingOutcomeEvents";
 import { BadgeCheck, CreditCard } from "lucide-react";
@@ -8,8 +11,10 @@ export const dynamic = "force-dynamic";
 export default async function BillingPage({
   searchParams,
 }: {
-  searchParams: { success?: string; canceled?: string; plan?: string };
+  searchParams: Promise<{ success?: string; canceled?: string; plan?: string }>;
 }) {
+  const sp = await searchParams;
+
   const supabase = createSupabaseServerClient();
   const {
     data: { user },
@@ -22,19 +27,22 @@ export default async function BillingPage({
     .maybeSingle();
 
   const outcome =
-    searchParams?.success === "1"
+    sp?.success === "1"
       ? "success"
-      : searchParams?.canceled === "1"
+      : sp?.canceled === "1"
         ? "canceled"
         : null;
 
-  const planFromQuery = (searchParams?.plan ?? "").toUpperCase();
+  const planFromQuery = (sp?.plan ?? "").toUpperCase();
   const planForEvents = (planFromQuery === "STARTER" || planFromQuery === "PRO"
     ? (planFromQuery as "STARTER" | "PRO")
     : (subscription?.plan ?? "FREE")) as "FREE" | "STARTER" | "PRO";
 
   return (
     <div className="mx-auto w-full max-w-3xl">
+      <Suspense fallback={null}>
+        <BillingRefreshOnSuccess />
+      </Suspense>
       <div className="flex flex-col gap-6">
         <div className="flex items-start justify-between gap-3">
           <div className="flex flex-col gap-1">
