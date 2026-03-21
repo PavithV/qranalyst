@@ -7,6 +7,8 @@ export type SubscriptionDisplay = {
   plan: SubscriptionPlan;
   status: SubscriptionStatus;
   stripeCustomerId: string | null;
+  cancelAtPeriodEnd: boolean | null;
+  currentPeriodEnd: Date | null;
 };
 
 /**
@@ -19,7 +21,13 @@ export async function getSubscriptionForUser(
   try {
     const sub = await getPrisma().subscription.findUnique({
       where: { userId },
-      select: { plan: true, status: true, stripeCustomerId: true },
+      select: {
+        plan: true,
+        status: true,
+        stripeCustomerId: true,
+        cancelAtPeriodEnd: true,
+        currentPeriodEnd: true,
+      },
     });
     if (sub) return sub;
   } catch {
@@ -30,7 +38,9 @@ export async function getSubscriptionForUser(
     const admin = createSupabaseAdminClient();
     const { data, error } = await admin
       .from("subscriptions")
-      .select("plan,status,stripe_customer_id")
+      .select(
+        "plan,status,stripe_customer_id,cancel_at_period_end,current_period_end",
+      )
       .eq("user_id", userId)
       .maybeSingle();
 
@@ -38,10 +48,17 @@ export async function getSubscriptionForUser(
       return null;
     }
 
+    const periodEndRaw = data.current_period_end as string | null | undefined;
+
     return {
       plan: data.plan as SubscriptionPlan,
       status: data.status as SubscriptionStatus,
       stripeCustomerId: (data.stripe_customer_id as string | null) ?? null,
+      cancelAtPeriodEnd:
+        typeof data.cancel_at_period_end === "boolean"
+          ? data.cancel_at_period_end
+          : null,
+      currentPeriodEnd: periodEndRaw ? new Date(periodEndRaw) : null,
     };
   } catch {
     return null;

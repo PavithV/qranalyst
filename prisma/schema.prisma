@@ -99,6 +99,8 @@ model Subscription {
   stripeSubscriptionId  String?  @map("stripe_subscription_id")
   plan                   SubscriptionPlan
   status                 SubscriptionStatus
+  /// Stripe: Kündigung wirkt am Ende der Periode — Status bleibt oft noch "active"
+  cancelAtPeriodEnd     Boolean? @map("cancel_at_period_end")
   currentPeriodEnd      DateTime? @map("current_period_end")
 
   createdAt DateTime @default(now()) @map("created_at")

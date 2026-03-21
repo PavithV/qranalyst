@@ -93,6 +93,7 @@ export async function reconcileCheckoutSessionFromStripe(opts: {
     stripeSubscriptionId: stripeSub.id,
     status: stripeSub.status,
     currentPeriodEnd: periodEnd,
+    cancelAtPeriodEnd: stripeSub.cancel_at_period_end ?? false,
   });
 
   if (error) {

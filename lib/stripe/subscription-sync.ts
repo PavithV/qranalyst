@@ -68,6 +68,8 @@ export async function syncPaidSubscriptionToSupabase(
     stripeSubscriptionId: string;
     status: string;
     currentPeriodEnd: Date | null;
+    /** Stripe: true = Kündigung vorgemerkt, Abo oft noch status "active" */
+    cancelAtPeriodEnd?: boolean | null;
   },
 ): Promise<{ error: string | null }> {
   const now = new Date().toISOString();
@@ -89,6 +91,8 @@ export async function syncPaidSubscriptionToSupabase(
       stripe_subscription_id: params.stripeSubscriptionId,
       plan: params.plan,
       status,
+      cancel_at_period_end:
+        params.cancelAtPeriodEnd === undefined ? null : params.cancelAtPeriodEnd,
       current_period_end: params.currentPeriodEnd?.toISOString() ?? null,
       updated_at: now,
     },

@@ -77,10 +77,19 @@ export default async function BillingPage({
           <div className="flex flex-col gap-1">
             <h1 className="text-2xl font-semibold tracking-tight">Billing</h1>
             <p className="text-sm text-muted-foreground">
-            Aktueller Status:{" "}
+              Aktueller Status:{" "}
               <span className="font-medium text-foreground">{subscription?.status ?? "-"}</span>{" "}
               · Plan: <span className="font-medium text-foreground">{subscription?.plan ?? "-"}</span>
             </p>
+            {subscription?.status === "active" && subscription.cancelAtPeriodEnd ? (
+              <p className="text-sm text-amber-700 dark:text-amber-400">
+                Kündigung vorgemerkt: Das Abo bleibt bis zum Ende der laufenden Periode aktiv
+                {subscription.currentPeriodEnd
+                  ? ` (${subscription.currentPeriodEnd.toLocaleDateString("de-DE")})`
+                  : ""}
+                . Danach setzt Stripe den Status auf <strong>canceled</strong>.
+              </p>
+            ) : null}
           </div>
           <CreditCard className="mt-1 size-5 text-muted-foreground" />
         </div>

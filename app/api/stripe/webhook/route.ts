@@ -73,6 +73,11 @@ export async function POST(req: NextRequest) {
           ? subscription.customer
           : subscription.customer?.toString() ?? "";
 
+      const cancelAtPeriodEnd =
+        event.type === "customer.subscription.deleted"
+          ? false
+          : (subscription.cancel_at_period_end ?? false);
+
       const { error } = await syncPaidSubscriptionToSupabase(supabaseAdmin, {
         userId,
         plan,
@@ -80,6 +85,7 @@ export async function POST(req: NextRequest) {
         stripeSubscriptionId: subscription.id,
         status,
         currentPeriodEnd,
+        cancelAtPeriodEnd,
       });
 
       if (error) {
@@ -171,6 +177,7 @@ export async function POST(req: NextRequest) {
         stripeSubscriptionId: subscription.id,
         status,
         currentPeriodEnd,
+        cancelAtPeriodEnd: subscription.cancel_at_period_end ?? false,
       });
 
       if (error) {
