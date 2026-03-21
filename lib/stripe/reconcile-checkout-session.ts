@@ -1,19 +1,15 @@
-import { randomUUID } from "node:crypto";
-
 import Stripe from "stripe";
-import type { SubscriptionPlan, SubscriptionStatus } from "@prisma/client";
 
-import { getPrisma } from "@/lib/prisma";
+import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import {
-  mapStripeSubscriptionStatusToDb,
-  planToUsageLimits,
   resolvePaidPlanFromStripeSubscription,
+  syncPaidSubscriptionToSupabase,
 } from "@/lib/stripe/subscription-sync";
 
 /**
- * Liest die Checkout-Session direkt bei Stripe und schreibt Abo + Limits per Prisma.
- * Unabhängig vom Webhook — löst Fälle, in denen Webhooks fehlen, verzögert sind oder
- * Supabase-Upserts still scheitern.
+ * Liest die Checkout-Session bei Stripe und schreibt Abo + Limits per **Supabase Service Role**
+ * (gleicher Pfad wie der Webhook) — damit die Daten im Supabase-Dashboard sichtbar sind.
+ * Unabhängig vom Webhook.
  */
 export async function reconcileCheckoutSessionFromStripe(opts: {
   sessionId: string;
@@ -22,6 +18,14 @@ export async function reconcileCheckoutSessionFromStripe(opts: {
   const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
   if (!stripeSecretKey) {
     return { ok: false, error: "STRIPE_SECRET_KEY fehlt." };
+  }
+
+  let supabaseAdmin;
+  try {
+    supabaseAdmin = createSupabaseAdminClient();
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "Supabase Admin fehlt";
+    return { ok: false, error: msg };
   }
 
   const stripe = new Stripe(stripeSecretKey);
@@ -66,7 +70,7 @@ export async function reconcileCheckoutSessionFromStripe(opts: {
   }
 
   const starterPriceId = process.env.STRIPE_PRICE_ID_STARTER;
-  const plan = resolvePaidPlanFromStripeSubscription(stripeSub, starterPriceId) as SubscriptionPlan;
+  const plan = resolvePaidPlanFromStripeSubscription(stripeSub, starterPriceId);
 
   const customerId =
     typeof session.customer === "string"
@@ -77,58 +81,22 @@ export async function reconcileCheckoutSessionFromStripe(opts: {
           ? stripeSub.customer
           : stripeSub.customer?.toString() ?? "";
 
-  const statusRaw = mapStripeSubscriptionStatusToDb(stripeSub.status);
-  const status = statusRaw as SubscriptionStatus;
-
   const periodEndTs = (stripeSub as unknown as { current_period_end?: number })
     .current_period_end;
   const periodEnd =
     typeof periodEndTs === "number" ? new Date(periodEndTs * 1000) : null;
 
-  const usage = planToUsageLimits(plan);
+  const { error } = await syncPaidSubscriptionToSupabase(supabaseAdmin, {
+    userId: opts.expectedUserId,
+    plan,
+    stripeCustomerId: customerId,
+    stripeSubscriptionId: stripeSub.id,
+    status: stripeSub.status,
+    currentPeriodEnd: periodEnd,
+  });
 
-  const prisma = getPrisma();
-
-  try {
-    await prisma.$transaction(async (tx) => {
-      await tx.subscription.upsert({
-        where: { userId: opts.expectedUserId },
-        create: {
-          id: randomUUID(),
-          userId: opts.expectedUserId,
-          plan,
-          status,
-          stripeCustomerId: customerId || null,
-          stripeSubscriptionId: stripeSub.id,
-          currentPeriodEnd: periodEnd,
-        },
-        update: {
-          plan,
-          status,
-          stripeCustomerId: customerId || null,
-          stripeSubscriptionId: stripeSub.id,
-          currentPeriodEnd: periodEnd,
-        },
-      });
-
-      await tx.usageLimit.upsert({
-        where: { userId: opts.expectedUserId },
-        create: {
-          userId: opts.expectedUserId,
-          qrCodeLimit: usage.qr_code_limit,
-          monthlyScanLimit: usage.monthly_scan_limit,
-          analyticsRetentionDays: usage.analytics_retention_days,
-        },
-        update: {
-          qrCodeLimit: usage.qr_code_limit,
-          monthlyScanLimit: usage.monthly_scan_limit,
-          analyticsRetentionDays: usage.analytics_retention_days,
-        },
-      });
-    });
-  } catch (e) {
-    const msg = e instanceof Error ? e.message : "Prisma sync failed";
-    return { ok: false, error: msg };
+  if (error) {
+    return { ok: false, error };
   }
 
   return { ok: true };
